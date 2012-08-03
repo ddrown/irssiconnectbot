@@ -24,7 +24,6 @@ import java.io.FileDescriptor;
 import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.net.InetAddress;
 import java.net.Inet4Address;
 import java.net.Inet6Address;
@@ -44,7 +43,6 @@ import com.trilead.ssh2.ChannelCondition;
 import com.trilead.ssh2.Connection;
 import com.trilead.ssh2.ConnectionMonitor;
 import com.trilead.ssh2.InteractiveCallback;
-import com.trilead.ssh2.Session;
 import com.trilead.ssh2.ServerHostKeyVerifier;
 
 import com.google.ase.Exec;
@@ -148,6 +146,11 @@ public class Mosh extends SSH implements ConnectionMonitor, InteractiveCallback,
 			stderr = session.getStderr();
 
 			sessionOpen = true;
+
+			// Give some time for mosh to init, otherwise we might loose the post-login automation.
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {}
 
 			bridge.onConnected();
 		} catch (IOException e1) {
