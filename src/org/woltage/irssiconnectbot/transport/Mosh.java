@@ -149,6 +149,11 @@ public class Mosh extends SSH implements ConnectionMonitor, InteractiveCallback,
 
 			sessionOpen = true;
 
+			// Give some time for mosh to init, otherwise we might loose the post-login automation.
+			try {
+				Thread.sleep(500);
+			} catch (InterruptedException e) {}
+
 			bridge.onConnected();
 		} catch (IOException e1) {
 			Log.e(TAG, "Problem while trying to create PTY in finishConnection()", e1);
