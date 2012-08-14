@@ -393,7 +393,7 @@ public class ConsoleActivity extends Activity {
 
         final RelativeLayout keyboardGroup = (RelativeLayout) findViewById(R.id.keyboard_group);
 
-        if(Build.MODEL.startsWith("Transformer") &&
+        if(Build.MODEL.contains("Transformer") &&
                         getResources().getConfiguration().keyboard == Configuration.KEYBOARD_QWERTY &&
                         prefs.getBoolean(PreferenceConstants.ACTIONBAR, true)) {
             keyboardGroup.setEnabled(false);
