@@ -69,6 +69,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 	public final static String FIELD_HOST_COMPRESSION = "compression";
 	public final static String FIELD_HOST_ENCODING = "encoding";
 	public final static String FIELD_HOST_STAYCONNECTED = "stayconnected";
+  public final static String FIELD_HOST_QUICKDISCONNECT = "quickdisconnect";
         public final static String FIELD_HOST_MOSHPORT = "moshport";
         public final static String FIELD_HOST_MOSH_SERVER = "moshserver";
         public final static String FIELD_HOST_LOCALE = "locale";
@@ -176,6 +177,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 				+ FIELD_HOST_COMPRESSION + " TEXT DEFAULT '" + Boolean.toString(false) + "', "
 				+ FIELD_HOST_ENCODING + " TEXT DEFAULT '" + ENCODING_DEFAULT + "', "
 				+ FIELD_HOST_STAYCONNECTED + " TEXT, "
+        + FIELD_HOST_QUICKDISCONNECT + " TEXT, "
                                 + FIELD_HOST_MOSHPORT + " INTEGER DEFAULT 0, "
                                 + FIELD_HOST_LOCALE + " TEXT DEFAULT '" + LOCALE_DEFAULT + "', "
                                 + FIELD_HOST_MOSH_SERVER + " TEXT DEFAULT '" + MOSH_SERVER_DEFAULT + "' "
@@ -281,6 +283,9 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
                 case 24:
                         db.execSQL("ALTER TABLE " + TABLE_HOSTS
                                 + " ADD COLUMN " + FIELD_HOST_MOSH_SERVER + " TEXT DEFAULT '" + MOSH_SERVER_DEFAULT + "'");
+    case 24:
+      db.execSQL("ALTER TABLE " + TABLE_HOSTS
+                    + " ADD COLUMN " + FIELD_HOST_QUICKDISCONNECT + " TEXT");
 		}
 	}
 
@@ -405,6 +410,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 			COL_COMPRESSION = c.getColumnIndexOrThrow(FIELD_HOST_COMPRESSION),
 			COL_ENCODING = c.getColumnIndexOrThrow(FIELD_HOST_ENCODING),
 			COL_STAYCONNECTED = c.getColumnIndexOrThrow(FIELD_HOST_STAYCONNECTED),
+      COL_QUICKDISCONNECT = c.getColumnIndexOrThrow(FIELD_HOST_QUICKDISCONNECT),
                         COL_MOSHPORT = c.getColumnIndexOrThrow(FIELD_HOST_MOSHPORT),
                         COL_MOSH_SERVER = c.getColumnIndexOrThrow(FIELD_HOST_MOSH_SERVER),
                         COL_LOCALE = c.getColumnIndexOrThrow(FIELD_HOST_LOCALE);
@@ -431,6 +437,7 @@ public class HostDatabase extends RobustSQLiteOpenHelper {
 			host.setCompression(Boolean.valueOf(c.getString(COL_COMPRESSION)));
 			host.setEncoding(c.getString(COL_ENCODING));
 			host.setStayConnected(Boolean.valueOf(c.getString(COL_STAYCONNECTED)));
+      hest.setQuickDisconnect(Boolean.valueOf(c.getString(COL_QUICKDISCONNECT)));
                         host.setMoshPort(c.getInt(COL_MOSHPORT));
                         host.setMoshServer(c.getString(COL_MOSH_SERVER));
                         host.setLocale(c.getString(COL_LOCALE));
