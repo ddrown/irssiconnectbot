@@ -18,7 +18,6 @@
 package org.woltage.irssiconnectbot;
 
 import android.app.AlertDialog;
-import android.app.Dialog;
 import android.content.DialogInterface;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
@@ -168,10 +167,17 @@ class ICBSimpleOnGestureListener extends GestureDetector.SimpleOnGestureListener
 			if (e.getX() > flip.getWidth() * 0.9) { // on the right side of the screen, use irssi channel switch menu
 				final String[] items = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "X" };
 
-				final Dialog irssiSwitchDialog = new Dialog(consoleActivity);
-				irssiSwitchDialog.setTitle("switch to irssi window");
-
 				GridView irssiSwitchGridView = new GridView(consoleActivity);
+				irssiSwitchGridView.setNumColumns(5);
+				irssiSwitchGridView.setHorizontalSpacing(-1);
+				irssiSwitchGridView.setVerticalSpacing(-1);
+				irssiSwitchGridView.setAdapter(new ArrayAdapter<String>(consoleActivity, R.layout.item_irssi_channel_switch, items));
+
+				final AlertDialog irssiSwitchDialog = new AlertDialog.Builder(consoleActivity)
+						.setTitle("switch to irssi window")
+						.setView(irssiSwitchGridView)
+						.create();
+
 				irssiSwitchGridView.setOnItemClickListener(new OnItemClickListener() {
 					@Override
 					public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -205,13 +211,7 @@ class ICBSimpleOnGestureListener extends GestureDetector.SimpleOnGestureListener
 					}
 				});
 
-				irssiSwitchGridView.setNumColumns(5);
-				irssiSwitchGridView.setHorizontalSpacing(-1);
-				irssiSwitchGridView.setVerticalSpacing(-1);
-				irssiSwitchGridView.setAdapter(new ArrayAdapter<String>(consoleActivity, R.layout.item_irssi_channel_switch, items));
-				irssiSwitchDialog.setContentView(irssiSwitchGridView);
 				irssiSwitchDialog.show();
-
 				return;
 			}
 
@@ -253,8 +253,6 @@ class ICBSimpleOnGestureListener extends GestureDetector.SimpleOnGestureListener
 							}
 						}
 					});
-			AlertDialog alert = builder.create();
-
 			builder.show();
 		}
 	}

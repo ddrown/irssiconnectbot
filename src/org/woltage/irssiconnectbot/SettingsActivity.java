@@ -60,8 +60,7 @@ public class SettingsActivity extends PreferenceActivity {
 
 		}
 
-		int sdkVersion = Integer.parseInt(Build.VERSION.SDK);
-		if (sdkVersion < Build.VERSION_CODES.HONEYCOMB)
+		if (PreferenceConstants.PRE_HONEYCOMB)
 		{
 			PreferenceCategory uiCategory = (PreferenceCategory) findPreference("pref_ui_category");
 			CheckBoxPreference actionBarCheckBox = (CheckBoxPreference) findPreference("actionbarsetting");

@@ -24,9 +24,12 @@ import android.os.Build;
  *
  */
 public class PreferenceConstants {
-	public static final boolean PRE_ECLAIR = (Integer.parseInt(Build.VERSION.SDK) <= 4);
-	public static final boolean PRE_FROYO = PRE_ECLAIR ? true :
-		(Integer.parseInt(Build.VERSION.SDK) <= 7);
+	// Build.VERSION.SDK_INT is sdk4+, we still support sdk3, so get it once
+	public static final int SDK_INT = Integer.parseInt(Build.VERSION.SDK);
+	public static final boolean PRE_ECLAIR = SDK_INT < 5;
+	public static final boolean PRE_FROYO = SDK_INT < 8;
+	public static final boolean PRE_HONEYCOMB = SDK_INT < 11;
+
 
 	public static final String MEMKEYS = "memkeys";
 	public static final String UPDATE = "update";
@@ -102,6 +105,7 @@ public class PreferenceConstants {
         public static final String INSTALLED_MOSH_VERSION = "moshVersion";
 
 	public static final String ON_SCREEN_BUTTONS = "onScreenButtons";
+	public static final String ON_SCREEN_BUTTONS_BOTTOM_ONLY = "onScreenButtonsBottomOnly";
 
 	/* Backup identifiers */
 	public static final String BACKUP_PREF_KEY = "prefs";

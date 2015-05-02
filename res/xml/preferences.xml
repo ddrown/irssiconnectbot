@@ -202,6 +202,15 @@
 			android:defaultValue="true"
 			/>
 
+		<CheckBoxPreference
+			android:key="onScreenButtonsBottomOnly"
+			android:layout="?android:attr/preferenceLayoutChild"
+			android:title="@string/pref_onscreenbuttonsbottomonly_title"
+			android:summary="@string/pref_onscreenbuttonsbottomonly_summary"
+			android:dependency="onScreenButtons"
+			android:defaultValue="false"
+			/>
+
 		<ListPreference
 			android:title="@string/pref_htcdesirez_title"
 			android:summary="@string/pref_htcdesirez_summary"

@@ -524,6 +524,10 @@
 	     accessibility purposes. -->
 	<string name="image_description_toggle_control_character">Toggle control character.</string>
 
+	<!-- Describes the icon of the "send tab character" button in the terminal view for
+	     accessibility purposes. -->
+	<string name="image_description_send_tab_character">Send tab character.</string>
+
 	<!-- Describes the icon of the "send escape character" button in the terminal view for
 	     accessibility purposes. -->
 	<string name="image_description_send_escape_character">Send escape character.</string>
@@ -555,6 +559,8 @@
 	<!-- On screen buttons -->
 	<string name="pref_onscreenbuttons_title">On-screen buttons</string>
 	<string name="pref_onscreenbuttons_summary">Show Ctrl / Esc / Sym / Keyboard buttons on touch</string>
+	<string name="pref_onscreenbuttonsbottomonly_title">Bottom of screen only</string>
+	<string name="pref_onscreenbuttonsbottomonly_summary">Limit gesture to to the bottom 20% of the screen</string>
 
 	<!--  HTC Desire Z  -->
 	<string name="pref_htcdesirez_title">HTC Desire Z fix</string>

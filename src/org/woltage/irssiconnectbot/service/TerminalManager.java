@@ -146,6 +146,8 @@ public class TerminalManager extends Service implements BridgeDisconnectedListen
 
 	@Override
 	public void onCreate() {
+                Log.i(TAG, "Starting service");
+
                 IntentFilter screenPowerFilter = new IntentFilter(Intent.ACTION_SCREEN_ON);
                 screenPowerFilter.addAction(Intent.ACTION_SCREEN_OFF);
                 mScreenPowerReceiver = new ScreenPowerReceiver();

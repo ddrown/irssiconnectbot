@@ -19,7 +19,6 @@ package org.woltage.irssiconnectbot;
 
 import java.util.List;
 
-import com.bugsense.trace.BugSenseHandler;
 import org.woltage.irssiconnectbot.bean.HostBean;
 import org.woltage.irssiconnectbot.service.TerminalBridge;
 import org.woltage.irssiconnectbot.service.TerminalManager;
@@ -232,7 +231,7 @@ public class HostListActivity extends ListActivity {
 		transportSpinner = (Spinner)findViewById(R.id.transport_selection);
 		transportSpinner.setVisibility(makingShortcut ? View.GONE : View.VISIBLE);
 		ArrayAdapter<String> transportSelection = new ArrayAdapter<String>(this,
-				android.R.layout.simple_spinner_item, TransportFactory.getTransportNames());
+				android.R.layout.simple_spinner_dropdown_item, TransportFactory.getTransportNames());
 		transportSelection.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
 		transportSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 			public void onItemSelected(AdapterView<?> arg0, View view, int position, long id) {

@@ -18,11 +18,6 @@
  */
 -->
 <resources>
-	<style name="NoTitle" parent="DefaultTheme">
-		<item name="android:windowNoTitle">true</item>
-		<item name="android:windowContentOverlay">@null</item>
-	</style>
-
-	<style name="DefaultTheme" parent="android:Theme">
+	<style name="DefaultTheme" parent="android:Theme.DeviceDefault">
 	</style>
 </resources>

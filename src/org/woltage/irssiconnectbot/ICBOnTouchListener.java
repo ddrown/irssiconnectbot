@@ -115,6 +115,8 @@ class ICBOnTouchListener implements View.OnTouchListener {
 				lastX = event.getX();
 				lastY = event.getY();
 			} else if (event.getAction() == MotionEvent.ACTION_UP
+					&& (event.getY() >= consoleActivity.flip.getHeight() * .8
+							|| !consoleActivity.prefs.getBoolean(PreferenceConstants.ON_SCREEN_BUTTONS_BOTTOM_ONLY, false))
 					&& keyboardGroup.getVisibility() == View.GONE
 					&& event.getEventTime() - event.getDownTime() < ConsoleActivity.CLICK_TIME
 					&& Math.abs(event.getX() - lastX) < ConsoleActivity.MAX_CLICK_DISTANCE
@@ -122,15 +124,7 @@ class ICBOnTouchListener implements View.OnTouchListener {
 				keyboardGroup.startAnimation(consoleActivity.keyboard_fade_in);
 				keyboardGroup.setVisibility(View.VISIBLE);
 
-				handler.postDelayed(new Runnable() {
-					public void run() {
-						if (keyboardGroup.getVisibility() == View.GONE)
-							return;
-
-						keyboardGroup.startAnimation(consoleActivity.keyboard_fade_out);
-						keyboardGroup.setVisibility(View.GONE);
-					}
-				}, ConsoleActivity.KEYBOARD_DISPLAY_TIME);
+				consoleActivity.hideKeyboardGroupDelayed();
 			}
 		}
 

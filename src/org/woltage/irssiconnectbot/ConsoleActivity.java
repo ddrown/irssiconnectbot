@@ -19,9 +19,7 @@ package org.woltage.irssiconnectbot;
 
 import java.io.IOException;
 import java.security.InvalidKeyException;
-import java.security.NoSuchAlgorithmException;
 import java.security.PublicKey;
-import java.security.spec.InvalidKeySpecException;
 
 import org.woltage.irssiconnectbot.bean.PubkeyBean;
 import org.woltage.irssiconnectbot.bean.SelectionArea;
@@ -46,7 +44,6 @@ import android.content.ServiceConnection;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
-import android.media.AudioManager;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -80,9 +77,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ViewFlipper;
-
-import com.bugsense.trace.BugSenseHandler;
-
 import de.mud.terminal.vt320;
 
 public class ConsoleActivity extends Activity {
@@ -128,7 +122,7 @@ public class ConsoleActivity extends Activity {
 
     private InputMethodManager inputManager;
 
-    private MenuItem disconnect, copy, paste, portForward, resize, urlscan;
+    private MenuItem disconnect, copy, paste, portForward, resize, urlscan, tabKey, ctrlKey, escKey, symKey, inputButton, keyboard, keys;
 
     protected TerminalBridge copySource = null;
 
@@ -136,6 +130,8 @@ public class ConsoleActivity extends Activity {
 
     private ImageView mKeyboardButton;
     private ImageView mInputButton;
+
+    private RelativeLayout keyboardGroup;
 
     private ServiceConnection connection = new ServiceConnection() {
         public void onServiceConnected(ComponentName className, IBinder service) {
@@ -298,21 +294,19 @@ public class ConsoleActivity extends Activity {
         hardKeyboard = hardKeyboard && !Build.MODEL.contains("Transformer");
 
         this.setContentView(R.layout.act_console);
-            BugSenseHandler.setup(this, "d27a12dc");
 
         clipboard = (ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
         prefs = PreferenceManager.getDefaultSharedPreferences(this);
 
         // hide action bar if requested by user
-        try {
+        // only do this for HONEYCOMB or later
+        if (!PreferenceConstants.PRE_HONEYCOMB) {
             ActionBar actionBar = getActionBar();
             if (!prefs.getBoolean(PreferenceConstants.ACTIONBAR, true)) {
                 actionBar.hide();
             }
             actionBar.setDisplayHomeAsUpEnabled(true);
             actionBar.setDisplayOptions(0,ActionBar.DISPLAY_SHOW_TITLE);
-        } catch (NoSuchMethodError error) {
-            Log.w(TAG, "Android sdk version pre 11. Not touching ActionBar.");
         }
 
 
@@ -321,9 +315,6 @@ public class ConsoleActivity extends Activity {
             getWindow().setFlags(WindowManager.LayoutParams.FLAG_FULLSCREEN,
                     WindowManager.LayoutParams.FLAG_FULLSCREEN);
         }
-
-        // TODO find proper way to disable volume key beep if it exists.
-        setVolumeControlStream(AudioManager.STREAM_MUSIC);
 
         // handle requested console from incoming intent
         requested = getIntent().getData();
@@ -395,7 +386,7 @@ public class ConsoleActivity extends Activity {
 
         inputManager = (InputMethodManager) getSystemService(Context.INPUT_METHOD_SERVICE);
 
-        final RelativeLayout keyboardGroup = (RelativeLayout) findViewById(R.id.keyboard_group);
+        keyboardGroup = (RelativeLayout) findViewById(R.id.keyboard_group);
 
         if(Build.MODEL.contains("Transformer") &&
                         getResources().getConfiguration().keyboard == Configuration.KEYBOARD_QWERTY &&
@@ -412,7 +403,7 @@ public class ConsoleActivity extends Activity {
                     return;
 
                 inputManager.showSoftInput(flip, InputMethodManager.SHOW_FORCED);
-                keyboardGroup.setVisibility(View.GONE);
+                hideKeyboardGroup();
             }
         });
 
@@ -426,7 +417,7 @@ public class ConsoleActivity extends Activity {
 
                 TerminalKeyListener handler = terminal.bridge.getKeyHandler();
                 handler.showCharPickerDialog(terminal);
-                keyboardGroup.setVisibility(View.GONE);
+                hideKeyboardGroup();
             }
         });
 
@@ -448,7 +439,22 @@ public class ConsoleActivity extends Activity {
                 promptThread.setDaemon(true);
                 promptThread.start();
 
-                keyboardGroup.setVisibility(View.GONE);
+                hideKeyboardGroup();
+            }
+        });
+
+        final ImageView tabButton = (ImageView) findViewById(R.id.button_tab);
+        tabButton.setOnClickListener(new OnClickListener() {
+            public void onClick(View view) {
+                View flip = findCurrentView(R.id.console_flip);
+                if (flip == null) return;
+                TerminalView terminal = (TerminalView)flip;
+
+                TerminalKeyListener handler = terminal.bridge.getKeyHandler();
+                handler.sendTab();
+                terminal.bridge.tryKeyVibrate();
+
+                hideKeyboardGroup();
             }
         });
 
@@ -463,7 +469,7 @@ public class ConsoleActivity extends Activity {
                 handler.metaPress(TerminalKeyListener.META_CTRL_ON);
                 terminal.bridge.tryKeyVibrate();
 
-                keyboardGroup.setVisibility(View.GONE);
+                hideKeyboardGroup();
             }
         });
 
@@ -477,17 +483,41 @@ public class ConsoleActivity extends Activity {
                 TerminalKeyListener handler = terminal.bridge.getKeyHandler();
                 handler.sendEscape();
                 terminal.bridge.tryKeyVibrate();
-                keyboardGroup.setVisibility(View.GONE);
+
+                hideKeyboardGroup();
             }
         });
 
         // detect fling gestures to switch between terminals
-        final GestureDetector detect = new GestureDetector(
+        final GestureDetector detect = new GestureDetector(this,
                 new ICBSimpleOnGestureListener(this));
 
         flip.setLongClickable(true);
         flip.setOnTouchListener(new ICBOnTouchListener(this, keyboardGroup, detect));
 
+    }
+
+    private Handler hideKeyboardGroupHandler = new Handler();
+
+    private Runnable hideKeyboardGroupRunnable = new Runnable() {
+		public void run() {
+			if (keyboardGroup.getVisibility() == View.GONE)
+				return;
+
+			keyboardGroup.startAnimation(keyboard_fade_out);
+			keyboardGroup.setVisibility(View.GONE);
+		}
+    };
+
+    void hideKeyboardGroupDelayed() {
+        // add the Runnable to the Handler
+        hideKeyboardGroupHandler.postDelayed(hideKeyboardGroupRunnable, KEYBOARD_DISPLAY_TIME);
+    }
+
+    private void hideKeyboardGroup() {
+        // remove the Runnable from the Handler if present
+        hideKeyboardGroupHandler.removeCallbacks(hideKeyboardGroupRunnable);
+        keyboardGroup.setVisibility(View.GONE);
     }
 
     /**
@@ -524,28 +554,11 @@ public class ConsoleActivity extends Activity {
     public boolean onCreateOptionsMenu(Menu menu) {
         super.onCreateOptionsMenu(menu);
 
-        View view = findCurrentView(R.id.console_flip);
-        final TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
-        final boolean activeTerminal = (view instanceof TerminalView);
-        boolean sessionOpen = false;
-        boolean disconnected = false;
-        boolean canForwardPorts = false;
-
-        if (activeTerminal) {
-            TerminalBridge bridge = ((TerminalView) view).bridge;
-            sessionOpen = bridge.isSessionOpen();
-            disconnected = bridge.isDisconnected();
-            canForwardPorts = bridge.canFowardPorts();
-        }
-
         menu.setQwertyMode(true);
 
         disconnect = menu.add(R.string.list_host_disconnect);
         if (hardKeyboard)
             disconnect.setAlphabeticShortcut('w');
-        if (!sessionOpen && disconnected)
-            disconnect.setTitle(R.string.console_menu_close);
-        disconnect.setEnabled(activeTerminal);
         disconnect.setIcon(android.R.drawable.ic_menu_close_clear_cancel);
         disconnect.setOnMenuItemClickListener(new OnMenuItemClickListener() {
             public boolean onMenuItemClick(MenuItem item) {
@@ -566,7 +579,6 @@ public class ConsoleActivity extends Activity {
         if (hardKeyboard)
             copy.setAlphabeticShortcut('c');
         copy.setIcon(android.R.drawable.ic_menu_set_as);
-        copy.setEnabled(activeTerminal);
         copy.setOnMenuItemClickListener(new OnMenuItemClickListener() {
             public boolean onMenuItemClick(MenuItem item) {
                 // mark as copying and reset any previous bounds
@@ -593,7 +605,6 @@ public class ConsoleActivity extends Activity {
         if (hardKeyboard)
             paste.setAlphabeticShortcut('v');
         paste.setIcon(android.R.drawable.ic_menu_edit);
-        paste.setEnabled(clipboard.hasText() && sessionOpen);
         paste.setOnMenuItemClickListener(new OnMenuItemClickListener() {
             public boolean onMenuItemClick(MenuItem item) {
                 // force insert of clipboard text into current console
@@ -613,7 +624,6 @@ public class ConsoleActivity extends Activity {
         if (hardKeyboard)
             portForward.setAlphabeticShortcut('f');
         portForward.setIcon(android.R.drawable.ic_menu_manage);
-        portForward.setEnabled(sessionOpen && canForwardPorts);
         portForward.setOnMenuItemClickListener(new OnMenuItemClickListener() {
             public boolean onMenuItemClick(MenuItem item) {
                 TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
@@ -630,7 +640,6 @@ public class ConsoleActivity extends Activity {
         if (hardKeyboard)
             urlscan.setAlphabeticShortcut('u');
         urlscan.setIcon(android.R.drawable.ic_menu_search);
-        urlscan.setEnabled(activeTerminal);
         urlscan.setOnMenuItemClickListener(new OnMenuItemClickListener() {
             public boolean onMenuItemClick(MenuItem item) {
                 final TerminalView terminal = (TerminalView) findCurrentView(R.id.console_flip);
@@ -646,7 +655,6 @@ public class ConsoleActivity extends Activity {
         if (hardKeyboard)
             resize.setAlphabeticShortcut('s');
         resize.setIcon(android.R.drawable.ic_menu_crop);
-        resize.setEnabled(sessionOpen);
         resize.setOnMenuItemClickListener(new OnMenuItemClickListener() {
             public boolean onMenuItemClick(MenuItem item) {
                 final TerminalView terminalView = (TerminalView) findCurrentView(R.id.console_flip);
@@ -690,10 +698,25 @@ public class ConsoleActivity extends Activity {
             }
         });
 
-        MenuItem ctrlKey = menu.add("Ctrl");
-        ctrlKey.setEnabled(activeTerminal);
+        tabKey = menu.add("Tab");
+        tabKey.setIcon(R.drawable.button_tab);
+        tabKey.setOnMenuItemClickListener(new OnMenuItemClickListener() {
+            @Override
+            public boolean onMenuItemClick(MenuItem menuItem) {
+                View flip = findCurrentView(R.id.console_flip);
+                if (flip == null) return false;
+
+                TerminalView terminal = (TerminalView)flip;
+
+                TerminalKeyListener handler = terminal.bridge.getKeyHandler();
+                handler.sendTab();
+                terminal.bridge.tryKeyVibrate();
+                return true;
+            }
+        });
+
+        ctrlKey = menu.add("Ctrl");
         ctrlKey.setIcon(R.drawable.button_ctrl);
-        MenuItemCompat.setShowAsAction(ctrlKey, MenuItem.SHOW_AS_ACTION_IF_ROOM);
         ctrlKey.setOnMenuItemClickListener(new OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem menuItem) {
@@ -709,10 +732,8 @@ public class ConsoleActivity extends Activity {
             }
         });
 
-        MenuItem escKey = menu.add("Esc");
-        escKey.setEnabled(activeTerminal);
+        escKey = menu.add("Esc");
         escKey.setIcon(R.drawable.button_esc);
-        MenuItemCompat.setShowAsAction(escKey, MenuItem.SHOW_AS_ACTION_IF_ROOM);
         escKey.setOnMenuItemClickListener(new OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem menuItem) {
@@ -728,10 +749,8 @@ public class ConsoleActivity extends Activity {
             }
         });
 
-        MenuItem symKey = menu.add("SYM");
-        symKey.setEnabled(activeTerminal);
+        symKey = menu.add("SYM");
         symKey.setIcon(R.drawable.button_sym);
-        MenuItemCompat.setShowAsAction(symKey, MenuItem.SHOW_AS_ACTION_IF_ROOM);
         symKey.setOnMenuItemClickListener(new OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem menuItem) {
@@ -746,10 +765,8 @@ public class ConsoleActivity extends Activity {
             }
         });
 
-        MenuItem inputButton = menu.add("Input");
-        inputButton.setEnabled(activeTerminal);
+        inputButton = menu.add("Input");
         inputButton.setIcon(R.drawable.button_input);
-        MenuItemCompat.setShowAsAction(inputButton, MenuItem.SHOW_AS_ACTION_IF_ROOM);
         inputButton.setOnMenuItemClickListener(new OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem menuItem) {
@@ -771,10 +788,8 @@ public class ConsoleActivity extends Activity {
             }
         });
 
-        MenuItem keyboard = menu.add("Show Keyboard");
-        keyboard.setEnabled(activeTerminal);
+        keyboard = menu.add("Show Keyboard");
         keyboard.setIcon(R.drawable.button_keyboard);
-        MenuItemCompat.setShowAsAction(keyboard, MenuItem.SHOW_AS_ACTION_IF_ROOM);
         keyboard.setOnMenuItemClickListener(new OnMenuItemClickListener() {
             @Override
             public boolean onMenuItemClick(MenuItem menuItem) {
@@ -787,10 +802,9 @@ public class ConsoleActivity extends Activity {
             }
         });
 
-        MenuItem keys = menu.add(R.string.console_menu_pubkeys);
+        keys = menu.add(R.string.console_menu_pubkeys);
         keys.setIcon(android.R.drawable.ic_lock_lock);
         keys.setIntent(new Intent(this, PubkeyListActivity.class));
-        keys.setEnabled(activeTerminal);
         keys.setOnMenuItemClickListener(new OnMenuItemClickListener() {
             public boolean onMenuItemClick(MenuItem item) {
                 Intent intent = new Intent(ConsoleActivity.this, PubkeyListActivity.class);
@@ -800,15 +814,34 @@ public class ConsoleActivity extends Activity {
             }
         });
 
+        // show certain menu entries on the action bar, if it is enabled,
+        // otherwise they are added to the regular menu
+        if (prefs.getBoolean(PreferenceConstants.ACTIONBAR, true)) {
+            MenuItemCompat.setShowAsAction(ctrlKey, MenuItem.SHOW_AS_ACTION_IF_ROOM);
+            MenuItemCompat.setShowAsAction(tabKey, MenuItem.SHOW_AS_ACTION_IF_ROOM);
+            MenuItemCompat.setShowAsAction(escKey, MenuItem.SHOW_AS_ACTION_IF_ROOM);
+            MenuItemCompat.setShowAsAction(symKey, MenuItem.SHOW_AS_ACTION_IF_ROOM);
+            MenuItemCompat.setShowAsAction(inputButton, MenuItem.SHOW_AS_ACTION_IF_ROOM);
+            MenuItemCompat.setShowAsAction(keyboard, MenuItem.SHOW_AS_ACTION_IF_ROOM);
+        }
+
         return true;
     }
 
     @Override
-    public boolean onPrepareOptionsMenu(Menu menu) {
-        super.onPrepareOptionsMenu(menu);
-
-        setVolumeControlStream(AudioManager.STREAM_NOTIFICATION);
-
+    public boolean onMenuOpened(int featureId, Menu menu) {
+        // Work around a bug in android that does not properly call onPrepareOptionsMenu
+        // in case the device has a hard menu button and the menu button is pressed
+        // for the first time.
+        // This could lead to an invalid menu, like buttons being enabled, when they
+        // actually shouldn't be, because we got disconnected in the meantime.
+        // This is related to the ActionBar and thus happens only on API13+.
+        // Compare
+        // * http://code.google.com/p/android/issues/detail?id=24231
+        // * http://stackoverflow.com/questions/12405825/how-can-i-force-the-onprepareoptionsmenu-method-to-fire
+        // * http://stackoverflow.com/questions/12886751/jelly-bean-not-calling-onprepareoptionsmenu-when-opening-the-menu-for-the-firs
+        // The invalidateOptionsMenu() solution is pretty bad, because it causes the whole menu to be rebuilt.
+        // Instead, just use onMenuOpened(), this is triggered correctly and has the same effect.
         final View view = findCurrentView(R.id.console_flip);
         boolean activeTerminal = (view instanceof TerminalView);
         boolean sessionOpen = false;
@@ -832,15 +865,20 @@ public class ConsoleActivity extends Activity {
         portForward.setEnabled(sessionOpen && canForwardPorts);
         urlscan.setEnabled(activeTerminal);
         resize.setEnabled(sessionOpen);
+        tabKey.setEnabled(sessionOpen);
+        ctrlKey.setEnabled(sessionOpen);
+        escKey.setEnabled(sessionOpen);
+        symKey.setEnabled(sessionOpen);
+        inputButton.setEnabled(sessionOpen);
+        keyboard.setEnabled(sessionOpen);
+        keys.setEnabled(sessionOpen);
 
-        return true;
+        return super.onMenuOpened(featureId, menu);
     }
 
     @Override
     public void onOptionsMenuClosed(Menu menu) {
         super.onOptionsMenuClosed(menu);
-
-        setVolumeControlStream(AudioManager.STREAM_MUSIC);
     }
 
     @Override

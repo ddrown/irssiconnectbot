@@ -18,7 +18,10 @@
  */
 -->
 <resources>
-	<style name="NoTitle" parent="android:Theme.Holo">
+	<style name="NoTitle" parent="DefaultTheme">
 		<item name="android:windowContentOverlay">@null</item>
+	</style>
+
+	<style name="DefaultTheme" parent="android:Theme.Holo">
 	</style>
 </resources>
